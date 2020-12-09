@@ -76,6 +76,40 @@ union dib_hdr
     uint8_t bytes[sizeof(struct bmp_info_hdr)];
 };
 
+static void print_bmp_hdr(struct bmp_file_hdr *hdr)
+{
+    printf("BMP File Header contents:\n");
+    printf("Header field: 0x%04X\n", hdr->hdr_field);
+    printf("Size in bytes: %d\n", hdr->size);
+    printf("Pixel map offset in bytes: %d\n", hdr->offset);
+
+    printf("\n\n");
+}
+
+static void print_dib_core_hdr(struct bmp_core_hdr *hdr)
+{
+    printf("DIB BMP Core Header contents:\n");
+    printf("Header size: %d\n", hdr->hdr_size);
+    printf("Width in pixels: %d\n", hdr->width_in_pxl);
+    printf("Height in pixels: %d\n", hdr->height_in_pxl);
+    printf("Color planes: %d\n", hdr->color_planes);
+    printf("Bits per pixel: %d\n", hdr->bits_per_pxl);
+
+    printf("\n\n");
+}
+
+static void print_dib_info_hdr(struct bmp_info_hdr *hdr)
+{
+    printf("DIB BMP Info Header contents:\n");
+    printf("Header size: %d\n", hdr->hdr_size);
+    printf("Width in pixels: %d\n", hdr->width_in_pxl);
+    printf("Height in pixels: %d\n", hdr->height_in_pxl);
+    printf("Color planes: %d\n", hdr->color_planes);
+    printf("Bits per pixel: %d\n", hdr->bits_per_pxl);
+
+    printf("\n\n");
+}
+
 int main(void)
 {
     FILE *file;
@@ -86,12 +120,7 @@ int main(void)
     memset(&bmp_hdr, 0, sizeof(bmp_hdr));
     fread(&bmp_hdr, 1, sizeof(bmp_hdr), file);
  
-    printf("BMP File Header contents:\n");
-    printf("Header field: 0x%04X\n", bmp_hdr.hdr_field);
-    printf("Size in bytes: %d\n", bmp_hdr.size);
-    printf("Pixel map offset in bytes: %d\n", bmp_hdr.offset);
-
-    printf("\n\n");
+    print_bmp_hdr(&bmp_hdr);
 
     union dib_hdr dib_hdr;
 
@@ -103,24 +132,14 @@ int main(void)
         case 12:
             fread(dib_hdr.bytes + sizeof(dib_hdr_size_t), 1, sizeof(struct bmp_core_hdr) -  sizeof(dib_hdr_size_t), file);
 
-            printf("BMP Core Header contents:\n");
-            printf("Header size: %d\n", dib_hdr.core_hdr.hdr_size);
-            printf("Width in pixels: %d\n", dib_hdr.core_hdr.width_in_pxl);
-            printf("Height in pixels: %d\n", dib_hdr.core_hdr.height_in_pxl);
-            printf("Color planes: %d\n", dib_hdr.core_hdr.color_planes);
-            printf("Bits per pixel: %d\n", dib_hdr.core_hdr.bits_per_pxl);
+            print_dib_core_hdr(&dib_hdr.core_hdr);
 
             break;
 
         case 40:
             fread(dib_hdr.bytes + sizeof(dib_hdr_size_t), 1, sizeof(struct bmp_info_hdr) - sizeof(dib_hdr_size_t), file);
 
-            printf("BMP Core Header contents:\n");
-            printf("Header size: %d\n", dib_hdr.info_hdr.hdr_size);
-            printf("Width in pixels: %d\n", dib_hdr.info_hdr.width_in_pxl);
-            printf("Height in pixels: %d\n", dib_hdr.info_hdr.height_in_pxl);
-            printf("Color planes: %d\n", dib_hdr.info_hdr.color_planes);
-            printf("Bits per pixel: %d\n", dib_hdr.info_hdr.bits_per_pxl);
+            print_dib_info_hdr(&dib_hdr.info_hdr);
 
             break;
     }
