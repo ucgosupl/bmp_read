@@ -38,7 +38,7 @@ struct __attribute__((packed)) bmp_file_hdr
 
 _Static_assert(14 == sizeof(struct bmp_file_hdr), "Struct size doesn't match");
 
-struct __attribute__((packed)) bmp_core_hdr
+struct __attribute__((packed)) dib_bmp_core_hdr
 {
     dib_hdr_size_t hdr_size;
     uint16_t width_in_pxl;
@@ -47,9 +47,9 @@ struct __attribute__((packed)) bmp_core_hdr
     uint16_t bits_per_pxl;
 };
 
-_Static_assert(12 == sizeof(struct bmp_core_hdr), "Struct size doesn't match");
+_Static_assert(12 == sizeof(struct dib_bmp_core_hdr), "Struct size doesn't match");
 
-struct __attribute__((packed)) bmp_info_hdr
+struct __attribute__((packed)) dib_bmp_info_hdr
 {
     dib_hdr_size_t hdr_size;
     uint32_t width_in_pxl;
@@ -64,17 +64,22 @@ struct __attribute__((packed)) bmp_info_hdr
     uint32_t important_colors;
 };
 
-_Static_assert(40 == sizeof(struct bmp_info_hdr), "Struct size doesn't match");
+_Static_assert(40 == sizeof(struct dib_bmp_info_hdr), "Struct size doesn't match");
 
 union dib_hdr
 {
     dib_hdr_size_t size;
 
-    struct bmp_core_hdr core_hdr;
-    struct bmp_info_hdr info_hdr;
+    struct dib_bmp_core_hdr core_hdr;
+    struct dib_bmp_info_hdr info_hdr;
 
-    uint8_t bytes[sizeof(struct bmp_info_hdr)];
+    uint8_t bytes[sizeof(struct dib_bmp_info_hdr)];
 };
+
+#define BMP_FILE_HDR_SIZE sizeof(struct bmp_file_hdr)
+#define DIB_BMP_CORE_HDR_SIZE sizeof(struct dib_bmp_core_hdr)
+#define DIB_BMP_INFO_HDR_SIZE sizeof(struct dib_bmp_info_hdr)
+#define DIB_HDR_SIZE_SIZE sizeof(dib_hdr_size_t)
 
 static void print_bmp_hdr(struct bmp_file_hdr *hdr)
 {
@@ -86,7 +91,7 @@ static void print_bmp_hdr(struct bmp_file_hdr *hdr)
     printf("\n\n");
 }
 
-static void print_dib_core_hdr(struct bmp_core_hdr *hdr)
+static void print_dib_core_hdr(struct dib_bmp_core_hdr *hdr)
 {
     printf("DIB BMP Core Header contents:\n");
     printf("Header size: %d\n", hdr->hdr_size);
@@ -98,7 +103,7 @@ static void print_dib_core_hdr(struct bmp_core_hdr *hdr)
     printf("\n\n");
 }
 
-static void print_dib_info_hdr(struct bmp_info_hdr *hdr)
+static void print_dib_info_hdr(struct dib_bmp_info_hdr *hdr)
 {
     printf("DIB BMP Info Header contents:\n");
     printf("Header size: %d\n", hdr->hdr_size);
@@ -129,18 +134,14 @@ int main(void)
 
     switch(dib_hdr.size)
     {
-        case 12:
-            fread(dib_hdr.bytes + sizeof(dib_hdr_size_t), 1, sizeof(struct bmp_core_hdr) -  sizeof(dib_hdr_size_t), file);
-
+        case DIB_BMP_CORE_HDR_SIZE:
+            fread(dib_hdr.bytes + DIB_HDR_SIZE_SIZE, 1, DIB_BMP_CORE_HDR_SIZE - DIB_HDR_SIZE_SIZE, file);
             print_dib_core_hdr(&dib_hdr.core_hdr);
-
             break;
 
-        case 40:
-            fread(dib_hdr.bytes + sizeof(dib_hdr_size_t), 1, sizeof(struct bmp_info_hdr) - sizeof(dib_hdr_size_t), file);
-
+        case DIB_BMP_INFO_HDR_SIZE:
+            fread(dib_hdr.bytes + DIB_HDR_SIZE_SIZE, 1, DIB_BMP_INFO_HDR_SIZE - DIB_HDR_SIZE_SIZE, file);
             print_dib_info_hdr(&dib_hdr.info_hdr);
-
             break;
     }
 
