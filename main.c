@@ -2,6 +2,13 @@
 #include <string.h>
 #include <stdint.h>
 
+
+
+#define BMP_FILE_HDR_SIZE sizeof(struct bmp_file_hdr)
+#define DIB_BMP_CORE_HDR_SIZE sizeof(struct dib_bmp_core_hdr)
+#define DIB_BMP_INFO_HDR_SIZE sizeof(struct dib_bmp_info_hdr)
+#define DIB_HDR_SIZE_SIZE sizeof(dib_hdr_size_t)
+
 enum
 {
     BMP_TYPE_BM = 0x424D,
@@ -26,11 +33,14 @@ enum
     BMP_COMP_BI_CMYKRLE4 = 13,
 };
 
+typedef uint16_t bmp_type_t;
 typedef uint32_t dib_hdr_size_t;
+
+typedef uint32_t comp_method_t;
 
 struct __attribute__((packed)) bmp_file_hdr
 {
-    uint16_t hdr_field;
+    bmp_type_t bmp_type;
     uint32_t size;
     uint8_t reserved1[4];
     uint32_t offset;
@@ -56,7 +66,7 @@ struct __attribute__((packed)) dib_bmp_info_hdr
     uint32_t height_in_pxl;
     uint16_t color_planes;
     uint16_t bits_per_pxl;
-    uint32_t compression_method;
+    comp_method_t compression_method;
     uint32_t image_size;
     uint32_t h_res;
     uint32_t v_res;
@@ -73,18 +83,13 @@ union dib_hdr
     struct dib_bmp_core_hdr core_hdr;
     struct dib_bmp_info_hdr info_hdr;
 
-    uint8_t bytes[sizeof(struct dib_bmp_info_hdr)];
+    uint8_t bytes[DIB_BMP_INFO_HDR_SIZE];
 };
-
-#define BMP_FILE_HDR_SIZE sizeof(struct bmp_file_hdr)
-#define DIB_BMP_CORE_HDR_SIZE sizeof(struct dib_bmp_core_hdr)
-#define DIB_BMP_INFO_HDR_SIZE sizeof(struct dib_bmp_info_hdr)
-#define DIB_HDR_SIZE_SIZE sizeof(dib_hdr_size_t)
 
 static void print_bmp_hdr(struct bmp_file_hdr *hdr)
 {
     printf("BMP File Header contents:\n");
-    printf("Header field: 0x%04X\n", hdr->hdr_field);
+    printf("Header field: 0x%04X\n", hdr->bmp_type);
     printf("Size in bytes: %d\n", hdr->size);
     printf("Pixel map offset in bytes: %d\n", hdr->offset);
 
@@ -129,6 +134,11 @@ int main(void)
 
     union dib_hdr dib_hdr;
 
+    /* 
+     * There are many different version of DIB headers.
+     * They are recognized by first element indicating header size.
+     * So we must read only this element, recognize header version, and read rest of it.
+     */
     memset(&dib_hdr, 0, sizeof(dib_hdr));
     fread(&dib_hdr, 1, sizeof(dib_hdr_size_t), file);
 
